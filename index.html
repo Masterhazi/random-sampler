@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hazi's Sampler 🎲</title>
+
+  <style>
+    :root {
+      --bg: #020617;
+      --card: #0f172a;
+      --text: #e5e7eb;
+      --accent: #22c55e;
+      --muted: #94a3b8;
+      --danger: #ef4444;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #020617, #020617);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      width: min(100%, 420px);
+      padding: 24px;
+      border-radius: 18px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      resize: vertical;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      background: #020617;
+      color: var(--text);
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+    }
+
+    textarea::placeholder {
+      color: var(--muted);
+    }
+
+    #display {
+      font-size: 2rem;
+      font-weight: 700;
+      min-height: 3rem;
+      margin: 24px 0;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .final {
+      color: var(--accent);
+      transform: scale(1.15);
+    }
+
+    button {
+      border: none;
+      background: var(--accent);
+      color: #022c22;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 12px 26px;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(34,197,94,0.4);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .error {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 8px;
+    }
+
+    footer {
+      margin-top: 14px;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+    <h1>PICK YOUR FATE 😜</h1>
+
+    <textarea id="input"
+      placeholder="Enter items (comma or new line separated)&#10;Example:&#10;Alice, Bob, Charlie">
+    </textarea>
+
+    <div id="display">Tap START</div>
+
+    <button id="startBtn">START</button>
+
+    <div class="error" id="error"></div>
+
+    <footer>star to star lets begin star wars</footer>
+  </div>
+
+  <script>
+    // 🔧 CONFIG
+    const TOTAL_DURATION = 45000;   // 45 seconds
+    const START_SPEED = 60;         // ms
+    const END_SPEED = 400;          // ms
+    const SLOWDOWN_WINDOW = 8000;   // last 8 seconds
+
+    const input = document.getElementById("input");
+    const display = document.getElementById("display");
+    const startBtn = document.getElementById("startBtn");
+    const error = document.getElementById("error");
+
+    let items = [];
+    let startTime = null;
+    let timeoutId = null;
+
+    function parseItems(text) {
+      return text
+        .split(/[\n,]/)
+        .map(i => i.trim())
+        .filter(i => i.length > 0);
+    }
+
+    function randomPick() {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function animate() {
+      const elapsed = Date.now() - startTime;
+      const remaining = TOTAL_DURATION - elapsed;
+
+      let speed = START_SPEED;
+      if (remaining < SLOWDOWN_WINDOW) {
+        const progress = 1 - remaining / SLOWDOWN_WINDOW;
+        speed = START_SPEED + progress * (END_SPEED - START_SPEED);
+      }
+
+      if (elapsed >= TOTAL_DURATION) {
+        finish();
+        return;
+      }
+
+      display.textContent = randomPick();
+      timeoutId = setTimeout(animate, speed);
+    }
+
+    function finish() {
+      clearTimeout(timeoutId);
+
+      display.textContent = `✅ ${randomPick()}`;
+      display.classList.add("final");
+
+      startBtn.style.display = "inline-block";
+      startBtn.disabled = false;
+    }
+
+    startBtn.addEventListener("click", () => {
+      error.textContent = "";
+      items = parseItems(input.value);
+
+      if (items.length < 2) {
+        error.textContent = "Please enter at least 2 items.";
+        return;
+      }
+
+      startBtn.disabled = true;
+      startBtn.style.display = "none";
+
+      display.classList.remove("final");
+      display.textContent = "";
+
+      startTime = Date.now();
+      animate();
+    });
+  </script>
+
+</body>
+</html>
